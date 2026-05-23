@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моніторинг мережевих пристроїв</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="assets/icons/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="main-title"><i class="fas fa-sitemap"></i> Інтерактивна система моніторингу мережевих пристроїв</h1>
+        
+        <div id="errorMessages"></div>
+
+        <h2>Додати новий пристрій</h2>
+        <form id="addDeviceForm" class="form-group">
+            <input type="text" id="deviceName" placeholder="Назва пристрою" required>
+            <input type="text" id="deviceIp" placeholder="IP адреса" required>
+            
+            <div class="form-group snmp-settings">
+                <h3>Налаштування SNMP (опціонально)</h3>
+                <div>
+                    <input type="checkbox" id="addSnmpEnabled" name="snmp_enabled">
+                    <label for="addSnmpEnabled">Увімкнути SNMP</label>
+                </div>
+                <div>
+                    <label for="addSnmpVersion">Версія SNMP:</label>
+                    <select id="addSnmpVersion" name="snmp_version">
+                        <option value="">Не вказано</option>
+                        <option value="1">v1</option>
+                        <option value="2" selected>v2c</option>
+                        <option value="3">v3 (не підтримується)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="addSnmpCommunity">Community String:</label>
+                    <input type="text" id="addSnmpCommunity" name="snmp_community" placeholder="public">
+                </div>
+                <div>
+                    <label for="addSnmpPort">Порт SNMP:</label>
+                    <input type="number" id="addSnmpPort" name="snmp_port" placeholder="161" value="161">
+                </div>
+            </div>
+
+            <!-- Новий блок для налаштувань SSH -->
+            <div class="form-group ssh-settings">
+                <h3>Налаштування SSH (опціонально)</h3>
+                <div>
+                    <input type="checkbox" id="addSshEnabled" name="ssh_enabled">
+                    <label for="addSshEnabled">Увімкнути SSH</label>
+                </div>
+                <div class="ssh-credentials" style="display: none;"> <!-- Початково приховано -->
+                    <div>
+                        <label for="addSshUsername">Ім'я користувача SSH:</label>
+                        <input type="text" id="addSshUsername" name="ssh_username" placeholder="admin">
+                    </div>
+                    <div>
+                        <label for="addSshPassword">Пароль SSH:</label>
+                        <input type="password" id="addSshPassword" name="ssh_password">
+                    </div>
+                </div>
+            </div>
+
+            <input type="submit" value="Додати пристрій">
+        </form>
+
+        <div class="table-controls">
+            <h3 class="table-controls-title"><i class="fas fa-cogs"></i> Дії над пристроями</h3>
+            <div class="table-controls-inner-content">
+                <div class="action-control-item">
+                    <button id="pingAllBtn" onclick="performPingAll(false)"><i class="fas fa-network-wired"></i> Перевірити всі (Ping)</button>
+                    <span id="autoRefreshInfo" class="action-info-span"></span>
+                </div>
+                <div class="action-control-item">
+                    <button id="snmpAllBtn" onclick="performSnmpAll()"><i class="fas fa-broadcast-tower"></i> Перевірити всі (SNMP)</button>
+                    <span id="snmpAllLastAppliedInfo" class="action-info-span">Ще не застосовувалось</span>
+                </div>
+                <div class="action-control-item">
+                    <button id="saveAllHistoryBtn" onclick="saveAllSessionHistory()"><i class="fas fa-save"></i> Зберегти історію сесії</button>
+                    <span id="saveHistoryLastAppliedInfo" class="action-info-span">Ще не застосовувалось</span>
+                </div>
+            </div>
+        </div>
+
+        <h2>
+            Список пристроїв 
+            <!-- <button onclick="fetchAllDevices()">Оновити список</button> --> 
+        </h2>
+        <table id="devicesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва</th>
+                    <th>IP Адреса</th>
+                    <th>Статус</th>
+                    <th>Останній контакт</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Рядки будуть додані динамічно -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container ping-group">
+        <h2>Результати останньої перевірки</h2>
+        <div id="lastCheckResultOutput" class="ping-results-display">Очікування запиту...</div>
+    </div>
+
+    <!-- Новий блок для результатів SNMP -->
+    <!-- <div class="container snmp-group">
+        <h2>Результати останньої перевірки SNMP</h2>
+        <div id="snmpGeneralStatus" style="margin-bottom: 10px; font-style: italic;">Очікування запиту...</div>
+        <div id="snmpAllResult" class="snmp-results-display"> 
+            
+        </div>
+    </div> -->
+
+    <div class="container global-results-group">
+        <h2>Загальна статистика Ping</h2>
+        
+        <div class="global-ping-stats-columns-container">
+            <div class="global-stats-section" id="globalStatsDb">
+                <h3><i class="fas fa-database"></i> З Бази Даних</h3>
+                <div class="stats-content">
+                    <div class="text-stats-container" id="textStatsDb">Завантаження...</div>
+                    <div class="chart-container" id="rttChartContainerDb">
+                        <canvas id="rttChartDb"></canvas>
+                    </div>
+                    <div class="sparkline-chart-container" id="rttSparklineContainerDb">
+                        <canvas id="rttSparklineDb"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="global-stats-section" id="globalStatsSession">
+                <h3><i class="fas fa-history"></i> З Поточної Сесії</h3>
+                <div class="stats-content">
+                    <div class="text-stats-container" id="textStatsSession">Завантаження...</div>
+                    <div class="chart-container" id="rttChartContainerSession">
+                        <canvas id="rttChartSession"></canvas>
+                    </div>
+                    <div class="sparkline-chart-container" id="rttSparklineContainerSession">
+                        <canvas id="rttSparklineSession"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="global-stats-section" id="globalStatsCombined">
+                <h3><i class="fas fa-layer-group"></i> Комбіновані Дані</h3>
+                <div class="stats-content">
+                    <div class="text-stats-container" id="textStatsCombined">Завантаження...</div>
+                    <div class="chart-container" id="rttChartContainerCombined">
+                        <canvas id="rttChartCombined"></canvas>
+                    </div>
+                    <div class="sparkline-chart-container" id="rttSparklineContainerCombined">
+                        <canvas id="rttSparklineCombined"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Новий контейнер для загального графіка стану пристроїв -->
+        <div class="global-stats-section" id="globalDeviceStatusTimelineContainer">
+            <h3><i class="fas fa-chart-line"></i> Загальна історія стану пристроїв (Ping)</h3>
+            <div class="sparkline-chart-container" id="deviceStatusSparklineContainer">
+                <canvas id="deviceStatusSparklineChart"></canvas>
+            </div>
+             <div id="deviceStatusTimelineText" style="text-align: center; font-size: 0.9em; color: var(--muted-text-color); margin-top: 5px;">Завантаження...</div>
+        </div>
+    </div>
+
+    <!-- Новий розділ для Загальної статистики SNMP -->
+    <div class="container global-results-group">
+        <h2 class="text-center"><i class="fas fa-chart-bar"></i> Загальна статистика SNMP</h2>
+        <div id="globalSnmpStatsContainer" class="global-ping-stats-columns-container">
+
+            <!-- Колонка 1: Статистика SNMP з Бази Даних -->
+            <div id="globalSnmpStatsDb" class="global-stats-section">
+            <h3><i class="fas fa-database"></i> З Бази Даних</h3>
+            <div class="stats-content">
+                    <div id="textSnmpStatsDb" class="text-stats-container">
+                        <!-- Text stats for DB SNMP will be injected here -->
+                    </div>
+
+                    <div class="snmp-metric-group snmp-group-load"> 
+                        <div class="sparkline-description">Навантаження (1хв):</div>
+                        <div id="snmpLaLoad1SparklineContainerDb" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Навантаження (5хв):</div>
+                        <div id="snmpLaLoad5SparklineContainerDb" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Навантаження (15хв):</div>
+                        <div id="snmpLaLoad15SparklineContainerDb" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-cpu"> 
+                        <div class="sparkline-description">CPU Користувач (%):</div>
+                        <div id="snmpCpuUserSparklineContainerDb" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">CPU Система (%):</div>
+                        <div id="snmpSsCpuSystemSparklineContainerDb" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">CPU Простій (%):</div>
+                        <div id="snmpCpuIdleSparklineContainerDb" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-ram"> 
+                        <div class="sparkline-description">RAM Використання (%):</div>
+                        <div id="snmpRamUsageSparklineContainerDb" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-swap"> 
+                        <div class="sparkline-description">Swap Використання (%):</div>
+                        <div id="snmpSwapUsageSparklineContainerDb" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-network"> 
+                        <div class="sparkline-description">Вхідний трафік (байт):</div>
+                        <div id="snmpIfInOctetsSparklineContainerDb" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Вихідний трафік (байт):</div>
+                        <div id="snmpIfOutOctetsSparklineContainerDb" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-disk"> 
+                        <div class="sparkline-description">Диск / Використання (%):</div>
+                        <div id="snmpDiskUsageSparklineContainerDb" class="sparkline-chart-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Колонка 2: Статистика SNMP з Поточної Сесії -->
+            <div id="globalSnmpStatsSession" class="global-stats-section">
+            <h3><i class="fas fa-satellite-dish"></i> З Поточної Сесії</h3>
+            <div class="stats-content">
+                    <div id="textSnmpStatsSession" class="text-stats-container">
+                        <!-- Text stats for Session SNMP will be injected here -->
+                    </div>
+                    <div class="snmp-metric-group snmp-group-load"> 
+                        <div class="sparkline-description">Навантаження (1хв):</div>
+                        <div id="snmpLaLoad1SparklineContainerSession" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Навантаження (5хв):</div>
+                        <div id="snmpLaLoad5SparklineContainerSession" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Навантаження (15хв):</div>
+                        <div id="snmpLaLoad15SparklineContainerSession" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-cpu"> 
+                        <div class="sparkline-description">CPU Користувач (%):</div>
+                        <div id="snmpCpuUserSparklineContainerSession" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">CPU Система (%):</div>
+                        <div id="snmpSsCpuSystemSparklineContainerSession" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">CPU Простій (%):</div>
+                        <div id="snmpCpuIdleSparklineContainerSession" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-ram"> 
+                        <div class="sparkline-description">RAM Використання (%):</div>
+                        <div id="snmpRamUsageSparklineContainerSession" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-swap"> 
+                        <div class="sparkline-description">Swap Використання (%):</div>
+                        <div id="snmpSwapUsageSparklineContainerSession" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-network"> 
+                        <div class="sparkline-description">Вхідний трафік (байт):</div>
+                        <div id="snmpIfInOctetsSparklineContainerSession" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Вихідний трафік (байт):</div>
+                        <div id="snmpIfOutOctetsSparklineContainerSession" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-disk"> 
+                        <div class="sparkline-description">Диск / Використання (%):</div>
+                        <div id="snmpDiskUsageSparklineContainerSession" class="sparkline-chart-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Колонка 3: Комбінована статистика SNMP -->
+            <div id="globalSnmpStatsCombined" class="global-stats-section combined-inactive">
+                <h3><i class="fas fa-network-wired"></i> Комбіновані Дані</h3>
+            <div class="stats-content">
+                    <div id="textSnmpStatsCombined" class="text-stats-container">
+                        <p>Завантаження...</p>
+                    </div>
+                    <div class="snmp-metric-group snmp-group-load"> 
+                        <div class="sparkline-description">Навантаження (1хв):</div>
+                        <div id="snmpLaLoad1SparklineContainerCombined" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Навантаження (5хв):</div>
+                        <div id="snmpLaLoad5SparklineContainerCombined" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Навантаження (15хв):</div>
+                        <div id="snmpLaLoad15SparklineContainerCombined" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-cpu"> 
+                        <div class="sparkline-description">CPU Користувач (%):</div>
+                        <div id="snmpCpuUserSparklineContainerCombined" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">CPU Система (%):</div>
+                        <div id="snmpSsCpuSystemSparklineContainerCombined" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">CPU Простій (%):</div>
+                        <div id="snmpCpuIdleSparklineContainerCombined" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-ram"> 
+                        <div class="sparkline-description">RAM Використання (%):</div>
+                        <div id="snmpRamUsageSparklineContainerCombined" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-swap"> 
+                        <div class="sparkline-description">Swap Використання (%):</div>
+                        <div id="snmpSwapUsageSparklineContainerCombined" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-network"> 
+                        <div class="sparkline-description">Вхідний трафік (байт):</div>
+                        <div id="snmpIfInOctetsSparklineContainerCombined" class="sparkline-chart-container"></div>
+                        <div class="sparkline-description">Вихідний трафік (байт):</div>
+                        <div id="snmpIfOutOctetsSparklineContainerCombined" class="sparkline-chart-container"></div>
+                    </div>
+            
+                    <div class="snmp-metric-group snmp-group-disk"> 
+                        <div class="sparkline-description">Диск / Використання (%):</div>
+                        <div id="snmpDiskUsageSparklineContainerCombined" class="sparkline-chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для редагування пристрою (початково приховане) -->
+    <div id="editDeviceModal" style="display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 50%; max-width: 500px; border-radius: 8px; position: relative;">
+            <span onclick="document.getElementById('editDeviceModal').style.display='none'" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            <h2 id="editDeviceModalTitle">Редагувати пристрій</h2>
+            <form id="editDeviceForm">
+                <input type="hidden" id="editDeviceId">
+                <div class="form-group">
+                    <label for="editDeviceName">Назва пристрою:</label>
+                    <input type="text" id="editDeviceName" style="width: calc(100% - 22px);" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDeviceIp">IP адреса:</label>
+                    <input type="text" id="editDeviceIp" style="width: calc(100% - 22px);" required>
+                </div>
+                <div class="form-group snmp-settings">
+                    <h3>Налаштування SNMP</h3>
+                    <div>
+                        <input type="checkbox" id="editSnmpEnabled" name="snmp_enabled">
+                        <label for="editSnmpEnabled">Увімкнути SNMP</label>
+                    </div>
+                    <div>
+                        <label for="editSnmpVersion">Версія SNMP:</label>
+                        <select id="editSnmpVersion" name="snmp_version">
+                            <option value="">Не вказано</option>
+                            <option value="1">v1</option>
+                            <option value="2">v2c</option>
+                             <option value="3">v3 (не підтримується)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editSnmpCommunity">Community String:</label>
+                        <input type="text" id="editSnmpCommunity" name="snmp_community" style="width: calc(100% - 22px);">
+                    </div>
+                    <div>
+                        <label for="editSnmpPort">Порт SNMP:</label>
+                        <input type="number" id="editSnmpPort" name="snmp_port" style="width: calc(100% - 22px);">
+                    </div>
+                </div>
+
+                <!-- Новий блок для налаштувань SSH в модальному вікні редагування -->
+                <div class="form-group ssh-settings">
+                    <h3>Налаштування SSH</h3>
+                    <div>
+                        <input type="checkbox" id="editSshEnabled" name="ssh_enabled">
+                        <label for="editSshEnabled">Увімкнути SSH</label>
+                    </div>
+                    <div class="ssh-credentials-edit" style="display: none;"> <!-- Початково приховано -->
+                        <div>
+                            <label for="editSshUsername">Ім'я користувача SSH:</label>
+                            <input type="text" id="editSshUsername" name="ssh_username" style="width: calc(100% - 22px);">
+                        </div>
+                        <div>
+                            <label for="editSshPassword">Новий пароль SSH (залиште порожнім, щоб не змінювати):</label>
+                            <input type="password" id="editSshPassword" name="ssh_password" style="width: calc(100% - 22px);">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit">Зберегти зміни</button>
+                <button type="button" onclick="document.getElementById('editDeviceModal').style.display='none'">Скасувати</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для Історії пристрою (початково приховане) -->
+    <div id="historyModal" style="display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+        <div style="background-color: #fff; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 1000px; border-radius: 8px; position: relative;">
+            <span onclick="closeDeviceHistoryModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            <h2 id="historyModalTitle">Історія пристрою: N/A</h2>
+            
+            <div id="historyModalErrorMessages" style="color: #fa383e; margin-bottom: 10px;"></div>
+
+            
+            <p id="modalHistoryTableStatus">Завантаження історії...</p>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th onclick="sortModalHistoryByColumn(0)">Час <span class="sort-indicator" id="modal-hist-sort-0"></span></th>
+                            <th onclick="sortModalHistoryByColumn(1)">Статус <span class="sort-indicator" id="modal-hist-sort-1"></span></th>
+                            <th onclick="sortModalHistoryByColumn(2)">RTT (мс) <span class="sort-indicator" id="modal-hist-sort-2"></span></th>
+                            <th onclick="sortModalHistoryByColumn(3)">Тип <span class="sort-indicator" id="modal-hist-sort-3"></span></th>
+                            <th onclick="sortModalHistoryByColumn(4)">Джерело <span class="sort-indicator" id="modal-hist-sort-4"></span></th>
+                            <th>Деталі</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalHistoryTableBody">
+                        <!-- Дані історії будуть тут -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 15px; text-align: right;">
+                <button type="button" onclick="saveCurrentDeviceSessionHistory()">Зберегти сесійну історію цього пристрою</button>
+                <button type="button" onclick="openFullHistoryView()">Відкрити повну історію (з графіками)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/uiUpdater.js"></script>
+    <script src="js/autoRefresh.js"></script>
+    <script src="js/historyLogic.js"></script>
+    <script src="js/historyModal.js"></script>
+    <script src="js/deviceManagement.js"></script>
+    <script src="js/pingLogic.js"></script>
+    <script src="js/snmpLogic.js"></script>
+    <script src="js/globalStats.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
