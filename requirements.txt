@@ -1,0 +1,25 @@
+# Web framework
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+
+# Database ORM
+SQLAlchemy==2.0.31
+
+# Data validation
+marshmallow==3.21.3
+
+# Network monitoring
+pingparsing==1.4.0
+
+# SNMP
+pysnmp==4.4.12
+pyasn1==0.4.8
+
+# SSH
+paramiko==3.4.0
+
+# Cryptography (password encryption)
+cryptography==42.0.8
+
+# Environment variables
+python-dotenv==1.0.1
