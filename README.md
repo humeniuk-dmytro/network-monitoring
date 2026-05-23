@@ -9,6 +9,20 @@
 
 ---
 
+## 📸 Screenshots
+
+| Dashboard | Device History |
+|-----------|---------------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![History](docs/screenshots/device_history.png) |
+
+| Add Device | SNMP Metrics |
+|------------|--------------|
+| ![Add Device](docs/screenshots/add_device_modal.png) | ![SNMP](docs/screenshots/snmp_metrics.png) |
+
+> **To add screenshots:** run the app, take screenshots, and save them to `docs/screenshots/`.
+
+---
+
 ## ✨ Features
 
 | Category | Capability |
@@ -56,8 +70,10 @@ network_monitoring/
 │       ├── globalStats.js
 │       ├── autoRefresh.js
 │       └── device_history.js
-├── config.py            # Dev/Prod/Test config classes
-├── run.py               # Entry point
+├── docs/
+│   └── screenshots/      # UI screenshots
+├── config.py             # Dev/Prod/Test config classes
+├── run.py                # Entry point
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
@@ -105,6 +121,183 @@ python run.py
 ```
 
 Open **http://localhost:5000**
+
+---
+
+## 🖥️ Setting Up a Test Device (QEMU/KVM + qcow2)
+
+The project was developed and tested against a **Linux VM** provided as a `.qcow2` disk image.  
+Below is a complete guide to launching the VM, enabling SNMP/SSH, and connecting the monitor to it.
+
+### What is a qcow2 file?
+
+A `.qcow2` file is a virtual hard disk image in QEMU Copy-On-Write format — the standard disk format for KVM/QEMU virtual machines. It contains a full Linux installation ready to boot.
+
+---
+
+### Step 1 — Prerequisites
+
+```bash
+# Ubuntu / Debian
+sudo apt update
+sudo apt install -y qemu-kvm libvirt-daemon-system virt-manager
+
+# Check KVM is available
+kvm-ok
+# Expected: "KVM acceleration can be used"
+
+# Add yourself to the kvm group (log out and back in after)
+sudo usermod -aG kvm,libvirt $USER
+```
+
+---
+
+### Step 2 — Boot the VM from the qcow2 image
+
+#### Option A — virt-manager (GUI, easiest)
+
+```bash
+virt-manager
+```
+
+1. **File → New Virtual Machine → Import existing disk image**
+2. Browse to your `.qcow2` file
+3. Set OS type: **Generic Linux**
+4. RAM: 512 MB is enough; CPUs: 1
+5. ✅ **"Customize configuration before install"** → set Network to **Bridge** or **NAT**
+6. Click **Begin Installation**
+
+#### Option B — command line
+
+```bash
+qemu-system-x86_64 \
+  -m 512 \
+  -hda /path/to/your-image.qcow2 \
+  -net nic \
+  -net user,hostfwd=tcp::2222-:22,hostfwd=udp::16100-:161 \
+  -nographic
+```
+
+> `-hostfwd` maps host port **2222 → VM port 22** (SSH) and  
+> host port **16100 → VM port 161** (SNMP UDP).
+
+---
+
+### Step 3 — Find the VM IP address
+
+If you used **bridge networking** (virt-manager default), the VM gets a real LAN IP:
+
+```bash
+# Inside the VM (after login):
+ip addr show
+# Look for inet 192.168.x.x under eth0 or enp1s0
+
+# From the host — list all VMs and their IPs:
+virsh list --all
+virsh domifaddr <vm-name>
+```
+
+If you used **NAT** with port forwarding, connect via `127.0.0.1:2222`.
+
+---
+
+### Step 4 — Enable SNMP on the VM
+
+```bash
+# SSH into the VM first
+ssh user@<VM_IP>
+# (or: ssh -p 2222 user@127.0.0.1  for port-forwarded NAT)
+
+# Install SNMP daemon
+sudo apt update
+sudo apt install -y snmpd snmp
+
+# Edit the config
+sudo nano /etc/snmp/snmpd.conf
+```
+
+Replace the contents with the minimal working config:
+
+```
+# Listen on all interfaces
+agentAddress udp:161,tcp:161
+
+# Community string (matches what you set in the monitoring app)
+rocommunity public 0.0.0.0/0
+
+# Standard MIBs
+view systemonly included .1.3.6.1.2.1.1
+view systemonly included .1.3.6.1.2.1.25.1
+
+# UCD-SNMP MIB — needed for CPU load and memory metrics
+extend    .1 /bin/echo "test"
+```
+
+```bash
+# Restart and enable
+sudo systemctl restart snmpd
+sudo systemctl enable snmpd
+
+# Verify locally
+snmpwalk -v2c -c public localhost 1.3.6.1.2.1.1.1.0
+# Should print: SNMPv2-MIB::sysDescr.0 = STRING: Linux ...
+```
+
+---
+
+### Step 5 — Open the firewall
+
+```bash
+# If ufw is active:
+sudo ufw allow 161/udp
+sudo ufw allow 22/tcp
+sudo ufw reload
+```
+
+---
+
+### Step 6 — Add the VM to the monitoring system
+
+1. Open **http://localhost:5000** in your browser
+2. Click **Add Device**
+3. Fill in:
+   - **Name:** anything (e.g. `Test VM`)
+   - **IP Address:** the VM's IP from Step 3
+   - **SNMP Enabled:** ✅
+   - **SNMP Version:** 2c
+   - **Community:** `public`
+   - **Port:** `161`
+4. Click **Save**
+
+Now click **Ping** on the device card — you should see `online`.  
+Click **SNMP** — you should see `sysDescr`, `sysUpTime`, `laLoad1`, `memAvailReal`.
+
+---
+
+### Step 7 — Enable SSH (optional, for remote command execution)
+
+```bash
+# Inside the VM:
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+
+# Test from host:
+ssh user@<VM_IP>
+```
+
+In the monitoring app → Edit Device → enable **SSH**, enter username and password.  
+Use the **SSH Command** feature to run arbitrary shell commands on the VM from the web UI.
+
+---
+
+### Troubleshooting SNMP
+
+| Symptom | Fix |
+|---------|-----|
+| `snmp_timeout` | Check `ufw` / `iptables`; verify `snmpd` is running: `systemctl status snmpd` |
+| `snmp_host_down` | VM not reachable; check bridge/NAT networking |
+| `laLoad1` / `memAvailReal` missing | Install `snmp-mibs-downloader`: `sudo apt install snmp-mibs-downloader` then restart `snmpd` |
+| Wrong community string | Must match exactly what's in `snmpd.conf` (default: `public`) |
 
 ---
 
