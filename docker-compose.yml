@@ -1,0 +1,27 @@
+# docker-compose.yml
+# Run:  docker compose up --build
+# Stop: docker compose down
+
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: network_monitor
+    ports:
+      - "5000:5000"       # host:container
+    volumes:
+      - db_data:/app/database   # persist SQLite DB between restarts
+    environment:
+      FLASK_ENV: development
+      # Override with a .env file or by setting these in your shell:
+      # SECRET_KEY: <your-secret>
+      # SSH_ENCRYPTION_SECRET: <your-secret>
+      # PASSWORD_SALT_SSH: <your-salt>
+    restart: unless-stopped
+    # Give NET_RAW capability so the ping command works inside the container
+    cap_add:
+      - NET_RAW
+
+volumes:
+  db_data:
