@@ -1,0 +1,1460 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+    --primary-color: #007bff; /* Яскраво-синій */
+    --secondary-color: #6c757d; /* Сірий */
+    --success-color: #28a745; /* Зелений */
+    --danger-color: #dc3545; /* Червоний */
+    --warning-color: #ffc107; /* Жовтий */
+    --info-color: #17a2b8; /* Бірюзовий */
+    --light-color: #f8f9fa; /* Дуже світло-сірий */
+    --dark-color: #343a40; /* Темно-сірий */
+    --background-color: #eef2f7; /* Ніжний світло-синьо-сірий фон */
+    --surface-color: #ffffff; /* Білий для карток/контейнерів */
+    --text-color: #212529; /* Майже чорний для тексту */
+    --muted-text-color: #6c757d; /* Сірий для менш важливого тексту */
+    --border-color: #dee2e6; /* Світло-сірий для рамок */
+    --font-family-sans-serif: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --border-radius: 0.375rem; /* 6px */
+    --box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); /* М'яка тінь для карток */
+    --box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+body {
+    font-family: var(--font-family-sans-serif);
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    line-height: 1.6;
+    overflow-x: hidden; /* Запобігаємо горизонтальному скролу */
+}
+
+.container {
+    background-color: var(--surface-color);
+    padding: 30px 35px; /* Збільшені падінги */
+    border-radius: var(--border-radius); 
+    box-shadow: var(--box-shadow);
+    width: 90%; /* Зробимо трохи ширше */
+    max-width: 960px; /* Максимальна ширина */
+    margin-bottom: 30px;
+    overflow: visible !important; /* Дозволити підказкам виходити за межі */
+}
+
+h1, h2, h3 {
+    color: var(--dark-color); /* Темний колір для заголовків */
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-weight: 500;
+}
+
+h1 {
+    font-size: 2.25rem; /* 36px */
+    color: var(--primary-color);
+}
+
+/* Стилізація головного заголовка сторінки */
+.main-title {
+    font-weight: 700; /* Більш жирний шрифт */
+    margin-top: 20px; /* Додатковий відступ зверху */
+    margin-bottom: 40px; /* Збільшений відступ знизу */
+    padding-bottom: 15px; /* Відступ для лінії */
+    border-bottom: 2px solid var(--primary-color-light, #66b0ff); /* Лінія під заголовком, світліший варіант primary */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Легка тінь для тексту */
+    display: flex; /* Для вирівнювання іконки та тексту */
+    align-items: center; /* Вертикальне вирівнювання */
+    justify-content: center; /* Горизонтальне вирівнювання */
+}
+
+.main-title i {
+    margin-right: 15px; /* Відступ для іконки */
+    font-size: 0.9em; /* Розмір іконки відносно тексту заголовка */
+    color: var(--primary-color); /* Іконка в основному кольорі */
+}
+
+h2 {
+    font-size: 1.75rem; /* 28px */
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+h3 {
+    font-size: 1.375rem; /* 22px */
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+    box-shadow: var(--box-shadow-sm);
+    border-radius: var(--border-radius);
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 12px 15px; /* Комфортні падінги */
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background-color: var(--light-color);
+    font-weight: 500; /* Менш жирний, але виразний */
+    color: var(--dark-color);
+    text-transform: uppercase;
+    font-size: 0.875rem; /* 14px */
+    letter-spacing: 0.05em;
+}
+
+tr:nth-child(even) {
+    background-color: #fdfdff; /* Ледь помітний відтінок для парних рядків */
+}
+
+tr:hover {
+    background-color: #f1f5f9; /* Світліший фон при наведенні */
+}
+
+.status-online { color: var(--success-color); font-weight: 500; }
+.status-offline { color: var(--danger-color); font-weight: 500; }
+.status-unknown, .status-na { color: var(--muted-text-color); }
+.status-timeout { color: #D77D03; font-weight: 500; } /* Насичений жовтогарячий для ping timeout */
+.status-error { color: #E67E22; font-weight: 500; } /* Помаранчевий для ping error */
+.status-online-parsing-error { color: #E67E22; font-weight: 500; } /* Помаранчевий */
+
+/* Нові SNMP статуси */
+.status-snmp-ok { color: var(--success-color); font-weight: 500; } /* Зелений */
+.status-snmp-error { color: #B94A48; font-weight: 500; } /* Темніший червоний для SNMP помилок */
+.status-snmp-timeout { color: #D77D03; font-weight: 500; } /* Такий самий як ping timeout */
+.status-snmp-no-response { color: #D77D03; font-weight: 500; } /* Такий самий як ping timeout */
+.status-snmp-host-down { color: var(--danger-color); font-weight: 500; } /* Червоний, як ping offline */
+.status-snmp-no-access { color: #E67E22; font-weight: 500; } /* Помаранчевий, як ping error */
+.status-snmp-parse-error { color: #E67E22; font-weight: 500; } /* Помаранчевий, як ping error */
+
+/* Кольорове кодування для RTT, Типу, Джерела в таблиці історії */
+.rtt-low { color: #28a745; /* Зелений */ }
+.rtt-medium { color: #ffc107; /* Жовтий */ }
+.rtt-high { color: #dc3545; /* Червоний */ }
+
+.type-ping { color: #007bff; /* Синій */ }
+.type-snmp { color: #6f42c1; /* Фіолетовий */ }
+
+.source-db { color: #343a40; /* Темно-сірий */ font-style: italic;}
+.source-session { color: #6c757d; /* Сірий */ font-style: italic;}
+
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select {
+    padding: 10px 15px; 
+    margin-top: 8px;
+    margin-bottom: 18px; 
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem; /* 16px */
+    width: 100%; 
+    box-sizing: border-box; 
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    background-color: var(--surface-color);
+    color: var(--text-color);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+
+#addDeviceForm .form-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+#addDeviceForm input[type="text"],
+#addDeviceForm input[type="number"],
+#addDeviceForm select {
+    width: 100%; /* Поля в сітці займають всю ширину комірки */
+    margin-right: 0; /* Зайве при використанні gap */
+}
+
+
+/* Стилі для кнопок */
+button, input[type="submit"] {
+    padding: 10px 20px; 
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 0.9375rem; /* 15px */
+    font-weight: 500; 
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, transform 0.1s ease, box-shadow 0.15s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: var(--box-shadow-sm);
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: #0069d9; /* Темніший синій при наведенні */
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+}
+
+button:active, input[type="submit"]:active {
+    transform: translateY(0px);
+    background-color: #005cbf;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.125);
+}
+
+button:disabled, input[type="submit"]:disabled {
+    background-color: var(--secondary-color);
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Кнопки дій в таблиці та випадаючому меню */
+.actions-dropdown .dropbtn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 12px;
+    font-size: 0.875rem; /* 14px */
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+
+.actions-dropdown .dropbtn:hover, 
+.actions-dropdown .dropbtn:focus {
+    background-color: #0069d9;
+}
+
+.actions-dropdown-content button {
+    padding: 8px 15px;
+    font-size: 0.875rem; /* 14px */
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    width: 100%;
+    text-align: left;
+    background: none;
+    color: var(--text-color);
+    border: none;
+    border-radius: 0; /* Плоскі кнопки всередині меню */
+}
+
+.actions-dropdown-content button:hover {
+    background-color: #e9ecef; /* Світло-сірий фон при наведенні */
+    color: var(--primary-color);
+}
+
+/* Червона кнопка видалення */
+.actions-dropdown-content button.delete-btn-style {
+    color: var(--danger-color);
+}
+.actions-dropdown-content button.delete-btn-style:hover {
+    background-color: rgba(220, 53, 69, 0.1); /* Світло-червоний фон */
+    color: #a71d2a; /* Темніший червоний */
+}
+
+
+.form-group, .ping-group {
+    margin-bottom: 25px; /* Збільшений відступ */
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: #fbfdff; /* Дуже світлий фон для груп */
+}
+
+#pingResultOutput { /* Змінено з pre на div */
+    background-color: var(--light-color);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    min-height: 80px; /* Мінімальна висота */
+    margin-top: 15px;
+    font-size: 0.9375rem; /* 15px */
+    line-height: 1.5;
+}
+#pingResultOutput h3, #pingResultOutput h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+#pingResultOutput h4 {
+    font-size: 1rem;
+    color: var(--dark-color);
+}
+
+
+#errorMessages {
+    color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.05);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    text-align: left; /* Або center, якщо краще */
+}
+#errorMessages:empty {
+    display: none; /* Приховати, якщо порожній */
+}
+
+
+.history-filters-container {
+    background-color: #f8f9fc;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+}
+
+.history-filters-container strong {
+    display: block;
+    margin-bottom: 15px;
+    color: var(--primary-color); 
+    font-size: 1.25rem; /* 20px */
+    font-weight: 500;
+}
+
+.filter-group {
+    display: flex;
+    flex-wrap: wrap; 
+    align-items: center;
+    gap: 15px; 
+    margin-bottom: 15px;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: var(--muted-text-color);
+    margin-right: 5px;
+}
+
+.filter-group select,
+.filter-group input[type="date"],
+.filter-group input[type="time"] {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9375rem; /* 15px */
+    box-sizing: border-box; 
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.filter-group select:focus,
+.filter-group input[type="date"]:focus,
+.filter-group input[type="time"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+
+.filter-group button {
+    padding: 8px 15px;
+    font-size: 0.875rem; /* 14px */
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    border: none;
+    border-radius: var(--border-radius);
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    transition: background-color 0.15s ease-in-out, transform 0.1s ease;
+}
+
+.filter-group button:hover {
+    background-color: #0069d9;
+    transform: translateY(-1px);
+}
+
+.filter-group button.reset-button {
+    background-color: var(--secondary-color);
+}
+
+.filter-group button.reset-button:hover {
+    background-color: #5a6268;
+}
+
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 20px 25px;
+    }
+    h1 { font-size: 1.875rem; } /* 30px */
+    h2 { font-size: 1.5rem; } /* 24px */
+    h3 { font-size: 1.25rem; } /* 20px */
+
+    #addDeviceForm .form-fields-grid {
+        grid-template-columns: 1fr; /* Один стовпець на мобільних */
+    }
+    #addDeviceForm input[type="text"],
+    #addDeviceForm input[type="number"] {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-group label {
+         margin-bottom: 5px; 
+    }
+    .filter-group select,
+    .filter-group input[type="date"],
+    .filter-group input[type="time"],
+    .filter-group button {
+        width: 100%; 
+        margin-bottom: 10px; 
+    }
+    .filter-group div { 
+        display: flex;
+        flex-direction: column; /* Дата і час теж у стовпець */
+        gap: 10px;
+        width: 100%;
+    }
+     .filter-group div input[type="date"],
+     .filter-group div input[type="time"] {
+         flex-grow: 1; 
+     }
+}
+
+
+.actions-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.actions-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--surface-color);
+    min-width: 180px; /* Трохи ширше */
+    box-shadow: var(--box-shadow);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    z-index: 1050; /* Збільшено z-index для надійного відображення поверх */
+    right: 0; 
+    margin-top: 2px; /* Маленький відступ від кнопки */
+}
+
+.actions-dropdown:hover .actions-dropdown-content,
+.actions-dropdown-content:hover {
+    display: block;
+}
+/* Кінець стилів для спадного меню */
+
+.ping-results-display { /* Перенесено та об'єднано з #pingResultOutput */
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--light-color);
+    min-height: 80px;
+    margin-top: 15px;
+    font-size: 0.9375rem; /* 15px */
+    line-height: 1.5;
+}
+
+.ping-results-display h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-size: 1.125rem; /* 18px */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ping-results-display h3 i {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+.ping-results-display h4 {
+    margin-bottom: 8px;
+    margin-top: 15px;
+    font-size: 1rem; /* 16px */
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.ping-raw-snippet {
+    background-color: var(--surface-color);
+    border: 1px solid #e3e6ea;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.875rem; /* 14px */
+    color: var(--muted-text-color);
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+.ping-raw-snippet strong {
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.ping-all-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 15px 0;
+}
+
+.ping-stats-list {
+    list-style-type: none;
+    padding: 10px 15px;
+    margin: 10px 0;
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.ping-stats-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ping-all-list li {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9375rem; /* 15px */
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ping-all-list li:last-child {
+    border-bottom: none;
+}
+
+.ping-all-list .rtt-info {
+    color: var(--muted-text-color);
+    font-size: 0.875rem;
+}
+
+.show-details-btn {
+    padding: 4px 8px;
+    font-size: 0.8125rem;
+    margin-left: auto;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--muted-text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.show-details-btn:hover {
+    background-color: var(--border-color);
+    color: var(--dark-color);
+}
+
+.ping-details {
+    flex-basis: 100%;
+    margin-top: 8px;
+}
+
+.timestamp {
+    margin-top: 15px;
+    color: var(--muted-text-color);
+    font-size: 0.875rem;
+    text-align: right;
+}
+
+/* Адаптивність для мобільних пристроїв */
+@media (max-width: 768px) {
+    .ping-stats-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .ping-all-list li {
+        padding: 8px;
+    }
+    
+    .show-details-btn {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+}
+
+.modal-snmp-list {
+    font-size: 0.875rem; /* 14px */
+    list-style-type: none;
+    padding-left: 0;
+    margin: 5px 0;
+}
+.modal-snmp-list li {
+    padding: 3px 0; 
+    border-bottom: 1px dotted #e0e0e0;
+}
+.modal-snmp-list li:last-child {
+    border-bottom: none;
+}
+.modal-snmp-list strong {
+    color: var(--text-color);
+    margin-right: 5px;
+}
+
+/* SNMP Settings specific for addDeviceForm and editDeviceModal */
+.snmp-settings {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: #fcfdff;
+}
+.snmp-settings h3 {
+    font-size: 1.1rem; /* Менший заголовок для секції SNMP */
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    text-align: left;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.snmp-settings div {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center; /* Вирівнювання по центру для чекбоксу та лейблу */
+}
+.snmp-settings label {
+    margin-left: 8px; /* Відступ для лейблу після чекбоксу */
+    margin-right: 10px; /* Відступ між лейблом та інпутом */
+    color: var(--muted-text-color);
+    font-weight: 400;
+    min-width: 140px; /* Щоб лейбли були приблизно однакової ширини */
+}
+.snmp-settings input[type="checkbox"] {
+    width: auto; /* Повертаємо авто-ширину для чекбоксів */
+    margin-right: 5px; 
+}
+.snmp-settings input[type="text"],
+.snmp-settings input[type="number"],
+.snmp-settings select {
+    flex-grow: 1; /* Інпути розтягуються */
+    margin-bottom: 0; /* Прибираємо зайвий відступ знизу в цій секції */
+}
+
+/* Стиль для #autoRefreshInfo */
+#autoRefreshInfo {
+    font-size: 0.875rem; /* 14px */
+    color: var(--muted-text-color);
+    margin-left: 15px;
+    font-style: italic;
+}
+
+/* Загальні стилі для заголовків таблиці пристроїв та кнопок поряд */
+#devicesTableTitleContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Дозволити перенос на мобільних */
+    gap: 10px;
+    margin-bottom: 0; /* h2 вже має margin-bottom */
+}
+#devicesTableTitleContainer h2 {
+    margin-bottom: 0; /* Прибираємо відступ знизу у h2, якщо він всередині */
+    text-align: left; /* Вирівнювання по лівому краю */
+}
+/* #devicesTableActions - видалено або замінено, оскільки тепер інша структура */
+
+/* Нові стилі для .table-controls */
+.table-controls {
+    margin-bottom: 25px; /* Відступ знизу всього блоку */
+    padding: 20px;
+    background-color: #fbfdff; /* Дуже світлий фон */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.table-controls-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.3rem; /* Трохи більший, ніж h3 за замовчуванням */
+    color: var(--primary-color);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.table-controls-title i {
+    margin-right: 10px;
+}
+
+.table-controls-inner-content {
+    display: flex;
+    flex-direction: column; /* Змінено на column для кращого розташування нових елементів */
+    gap: 15px; /* Проміжок між контейнерами кнопок */
+}
+
+/* Новий контейнер для кожної кнопки та її інформаційного блоку */
+.action-control-item {
+    display: flex;
+    align-items: center; /* Вирівнювання кнопки та інфо-блоку по центру вертикально */
+    gap: 15px; /* Проміжок між кнопкою та інфо-блоком */
+    background-color: var(--surface-color); /* Фон, як у .table-controls-autorefresh-column */
+    border: 1px dashed var(--border-color); /* Рамка, як у .table-controls-autorefresh-column */
+    border-radius: var(--border-radius);
+    padding: 10px;
+    /* flex-grow: 1; /* Розтягуємо на всю доступну ширину */
+}
+
+.action-control-item button {
+    flex-shrink: 0; /* Кнопка не буде стискатися */
+    /* width: auto; /* Повертаємо авто-ширину кнопці, якщо вона була 100% */
+    text-align: left;
+    justify-content: flex-start;
+    padding-left: 15px;
+    padding-right: 15px;
+    min-width: 280px; /* Мінімальна ширина для кнопок, щоб текст не переносився дивно */
+}
+
+.action-control-item button i {
+    margin-right: 10px;
+}
+
+/* Стиль для інформаційних span елементів */
+.action-info-span {
+    flex-grow: 1; /* Займає решту місця */
+    font-size: 0.875rem; /* 14px */
+    color: var(--muted-text-color);
+    font-style: italic;
+    text-align: center; /* Вирівнювання тексту по центру */
+    line-height: 1.5; /* Для кращого вигляду тексту */
+    /* background-color, border, padding тощо вже в .action-control-item */
+    min-height: 38px; /* Приблизна висота кнопки, щоб контейнери були однакової висоти */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Новий контейнер для лівої панелі */
+.table-controls-left-panel {
+    display: flex;
+    flex-direction: column; /* Основний напрямок для секцій всередині */
+    gap: 10px; /* Проміжок між .ping-all-section та .other-actions-column */
+    flex-grow: 1; /* Дозволяємо лівій панелі зайняти доступний простір */
+}
+
+/* Секція для кнопки Ping All та інформації про автооновлення */
+.ping-all-section {
+    display: flex;
+    align-items: center; /* Вирівнюємо кнопку та інфо-блок по центру вертикально */
+    gap: 15px; /* Проміжок між кнопкою Ping All та інфо-блоком */
+    background-color: var(--surface-color); /* Фон, як у .table-controls-autorefresh-column */
+    border: 1px dashed var(--border-color); /* Рамка, як у .table-controls-autorefresh-column */
+    border-radius: var(--border-radius);
+    padding: 10px; 
+}
+
+.ping-all-section button {
+    flex-shrink: 0; /* Кнопка не буде стискатися */
+    /* width: auto; /* Повертаємо авто-ширину кнопці, якщо вона була 100% */
+    /* text-align: left; - це було для стовпчика, тепер не обов'язково */
+    /* justify-content: flex-start; - теж */
+}
+
+/* Блок для інформації про автооновлення - тепер всередині .ping-all-section */
+#autoRefreshInfoWrapper {
+    flex-grow: 1; /* Займає решту місця в .ping-all-section */
+    /* background-color, border, padding тощо вже в .ping-all-section */
+    /* min-height більше не потрібен тут, бо висота визначається .ping-all-section */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Колонка для інших кнопок (SNMP All, Save History) */
+.other-actions-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.other-actions-column button {
+    width: 100%; /* Кнопки на всю ширину своєї колонки */
+    text-align: left;
+    justify-content: flex-start;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.other-actions-column button i {
+    margin-right: 10px;
+}
+
+/* Видаляємо або коригуємо старі стилі, які тепер не потрібні або конфліктують */
+/* .table-controls-buttons-column - цей клас замінено на .other-actions-column та .ping-all-section button */
+
+.table-controls-buttons-column {
+    display: flex;
+    flex-direction: column; /* Кнопки в стовпчик */
+    gap: 10px; /* Проміжок між кнопками */
+    flex-basis: auto; 
+}
+
+.table-controls-buttons-column button {
+    width: 100%; /* Кнопки на всю ширину колонки */
+    text-align: left; 
+    justify-content: flex-start; 
+    padding-left: 15px; 
+    padding-right: 15px;
+}
+
+.table-controls-buttons-column button i {
+    margin-right: 10px; 
+}
+
+.table-controls-autorefresh-column {
+    flex-grow: 1; 
+    padding: 10px;
+    background-color: var(--surface-color);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    /* min-height: 100px; */ /* Видаляємо або коментуємо, щоб висота не була фіксованою */
+    display: flex;
+    align-items: center; /* Вертикальне вирівнювання тексту по центру */
+    justify-content: center; /* Горизонтальне вирівнювання тексту по центру */
+    /* Обмеження висоти, щоб відповідати приблизно одній кнопці + відступи */
+    /* Висота кнопки приблизно 38px (10px padding-top + 10px padding-bottom + ~18px line-height) + 10px margin кнопки */
+    /* Спробуємо з max-height, щоб вміст не вилазив, якщо тексту стане більше */
+    max-height: 40px; /* Або можна підібрати точніше значення */
+    box-sizing: border-box; /* Враховуємо padding та border у висоті */
+}
+
+/* Стилі для #autoRefreshInfo, якщо потрібні специфічні */
+.auto-refresh-info-styled {
+    /* display: block; */ /* Якщо потрібно, щоб займав всю ширину в своєму контейнері */
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* Кінець нових стилів для .table-controls */
+
+/* Стилі для модальних вікон (спільні) */
+.modal-overlay {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5); /* Темніший фон */
+    display: flex; /* Для центрування вмісту */
+    align-items: center;
+    justify-content: center;
+    padding: 20px; /* Відступи для маленьких екранів */
+    box-sizing: border-box;
+}
+
+.modal-content {
+    background-color: var(--surface-color);
+    margin: auto; /* Автоматичне центрування */
+    padding: 25px 30px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.15);
+    position: relative;
+    width: auto; /* Ширина буде залежати від вмісту */
+    max-width: 500px; /* Для модалки редагування */
+    animation: fadeInModal 0.3s ease-out;
+}
+
+.modal-content-large { /* Для модалки історії */
+    max-width: 1000px;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem; /* 24px */
+    color: var(--primary-color);
+    text-align: left;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.modal-close-btn {
+    color: var(--muted-text-color);
+    font-size: 1.75rem; /* 28px */
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0 5px;
+    line-height: 1;
+}
+.modal-close-btn:hover {
+    color: var(--dark-color);
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+.modal-footer button {
+    min-width: 100px; /* Мінімальна ширина кнопок у футері */
+}
+.modal-footer button.secondary-action {
+    background-color: var(--secondary-color);
+}
+.modal-footer button.secondary-action:hover {
+    background-color: #5a6268;
+}
+
+/* Адаптивність для модальних вікон */
+@media (max-width: 600px) {
+    .modal-content, .modal-content-large {
+        width: 95%;
+        max-width: 95%;
+        padding: 20px;
+    }
+    .modal-header h2 {
+        font-size: 1.25rem; /* 20px */
+    }
+     .modal-footer {
+        flex-direction: column;
+    }
+    .modal-footer button {
+        width: 100%;
+    }
+}
+
+.snmp-metrics-container {
+    margin: 15px 0;
+}
+
+.snmp-metrics-container.error {
+    border: 1px solid var(--danger-color);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    background-color: rgba(var(--danger-rgb), 0.05);
+}
+
+.snmp-category {
+    margin-bottom: 20px;
+}
+
+.snmp-category h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.snmp-metrics-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 10px;
+}
+
+.snmp-metric-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 12px;
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+}
+
+.snmp-metric-item.error {
+    background-color: rgba(var(--danger-rgb), 0.05);
+    border: 1px solid rgba(var(--danger-rgb), 0.2);
+}
+
+.snmp-metric-item .metric-name {
+    font-weight: 500;
+    color: var(--dark-color);
+    flex-shrink: 1; /* Дозволяємо назві стискатися */
+    overflow-wrap: break-word; /* Дозволяємо перенос довгих слів у назві */
+}
+
+.snmp-metric-item .metric-value {
+    text-align: left; 
+    color: var(--muted-text-color);
+    word-break: break-word; /* Це вже було, залишаємо */
+    flex-grow: 1; 
+    flex-shrink: 1; /* Явно вказуємо, що значення також може стискатися */
+    min-width: 0; /* Дозволяє значенню стискатися менше за його вміст */
+}
+
+.snmp-metric-item .metric-value.error {
+    color: var(--danger-color);
+}
+
+.error-message {
+    color: var(--danger-color);
+    background-color: rgba(var(--danger-rgb), 0.05);
+    padding: 10px;
+    border-radius: var(--border-radius);
+    margin: 10px 0;
+}
+
+/* Адаптивність для SNMP метрик */
+@media (max-width: 768px) {
+    .snmp-metrics-list {
+        grid-template-columns: 1fr;
+    }
+
+    .snmp-metric-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .snmp-metric-item .metric-name {
+        margin-bottom: 4px;
+        margin-right: 0;
+    }
+
+    .snmp-metric-item .metric-value {
+        text-align: left;
+    }
+}
+
+/* Стилі для SNMP "Перевірка Всіх" */
+.snmp-result-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Або align-items: flex-start; якщо назва може бути довгою */
+    gap: 15px; /* Проміжок між інфо та кнопкою */
+    margin-bottom: 10px; /* Відступ під заголовком кожного пристрою */
+}
+
+.snmp-result-info {
+    flex-grow: 1; /* Дозволяє текстовій частині зайняти доступний простір */
+}
+
+.snmp-result-header-flex h3 {
+    margin-bottom: 5px; /* Менший відступ для H3 всередині flex */
+}
+
+.snmp-skipped-device {
+    padding: 10px;
+    background-color: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+}
+
+.snmp-skipped-device h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: var(--muted-text-color);
+}
+
+.snmp-skipped-device p {
+    margin-bottom: 0;
+    font-size: 0.9em;
+}
+
+/* General text utility classes */
+.text-success {
+    color: var(--success-color);
+}
+.text-danger {
+    color: var(--danger-color);
+}
+.text-warning {
+    color: var(--warning-color);
+}
+.text-info {
+    color: var(--info-color);
+}
+.text-muted {
+    color: var(--muted-text-color);
+}
+
+
+/* Глобальна статистика Ping */
+.global-results-group {
+    margin-top: 30px;
+    padding: 25px 30px; /* Збільшено відступи */
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-sm);
+}
+
+.global-results-group h2 {
+    text-align: center;
+    margin-bottom: 30px; /* Збільшено відступ */
+    border-bottom: 1px solid var(--primary-color-light, #66b0ff); /* Яскравіша межа */
+    padding-bottom: 20px; /* Збільшено відступ */
+    font-size: 1.85rem; /* Збільшено розмір шрифту */
+    color: var(--primary-color); /* Колір як у головного заголовка */
+    font-weight: 500;
+}
+
+.global-stats-section {
+    margin-bottom: 25px;
+    padding: 20px; /* Збільшено внутрішні відступи */
+    border: 1px solid var(--border-color); /* Чіткіша межа */
+    border-radius: var(--border-radius);
+    background-color: var(--surface-color); /* Фон як у батьківського контейнера або трохи інший */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Додано тінь */
+    display: flex; /* Для кращого контролю над внутрішнім контентом */
+    flex-direction: column;
+    overflow: visible !important; /* Дозволити підказкам виходити за межі */
+}
+
+.global-stats-section h3 {
+    margin-bottom: 5px; /* Зменшено відступ знизу для заголовка колонки */
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.global-stats-section h3 i {
+    margin-right: 10px; /* Збільшено відступ для іконки */
+    font-size: 1.1em; /* Трохи більша іконка */
+}
+
+.global-stats-section .stats-content {
+    font-size: 0.95rem; /* Трохи більший шрифт для контенту */
+    line-height: 1.7; /* Збільшено міжрядковий інтервал */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Центрування дочірніх елементів */
+    gap: 15px; /* Проміжок між елементами в stats-content */
+    flex-grow: 1; /* Дозволяє секції розтягуватися, якщо потрібно */
+}
+
+.global-stats-section .text-stats-container {
+    text-align: center; /* Центрування текстової статистики */
+    width: 100%;
+}
+.global-stats-section .text-stats-container p {
+    margin-bottom: 12px; /* Збільшено відступ для параграфів */
+    font-size: 0.95rem; /* Трохи менший базовий розмір для міток */
+    line-height: 1.7; /* Збільшено міжрядковий інтервал */
+    color: var(--muted-text-color); /* Приглушений колір для міток */
+    padding-bottom: 8px; /* Відступ перед розділовою лінією */
+    border-bottom: 1px solid var(--border-color); /* Тонка розділова лінія */
+    display: flex; /* Включаємо Flexbox */
+    justify-content: space-between; /* Розносимо мітку і значення по краях */
+    align-items: center; /* Вирівнюємо по центру вертикально */
+}
+
+.global-stats-section .text-stats-container p:last-child {
+    border-bottom: none; /* Прибираємо лінію для останнього елемента */
+    margin-bottom: 0; /* Прибираємо зайвий відступ для останнього елемента */
+}
+
+.global-stats-section .text-stats-container p strong {
+    font-weight: 600;
+    color: var(--primary-text-color); /* Або інший колір для акценту */
+}
+
+/* Стилі для SNMP метрик в текстовому блоці (якщо потрібні специфічні) */
+.global-stats-section .text-stats-container .snmp-metric-item {
+    font-size: 0.95em;
+    margin-bottom: 4px;
+}
+
+/* Стилізація окремих метрик */
+.metric-total-devices strong {
+    color: var(--info-color); /* Синій/бірюзовий для загальної кількості */
+}
+
+.metric-online strong {
+    color: var(--success-color); /* Зелений для онлайн */
+}
+
+.metric-offline strong {
+    color: var(--danger-color); /* Червоний для офлайн/проблем, якщо є */
+}
+/* Якщо офлайн = 0, можна змінити колір, але це складніше через CSS only */
+
+.metric-avg-rtt strong {
+    color: var(--primary-color); /* Основний синій для RTT */
+}
+
+.metric-rtt-dist-title {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    border-bottom: none !important; /* Прибираємо подвійну лінію */
+    padding-bottom: 0 !important;
+}
+
+.metric-rtt-count-summary {
+    font-size: 0.9rem;
+    color: var(--muted-text-color);
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 5px;
+}
+
+
+/* Стилізація для rtt-dist-list */
+.rtt-dist-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+    margin-bottom: 15px; /* Збільшено відступ */
+    width: fit-content; /* Ширина по контенту */
+    margin-left: auto;
+    margin-right: auto; /* Центрування списку */
+}
+.rtt-dist-list li {
+    margin-bottom: 8px; /* Відступ між елементами списку */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Вирівнювання по лівому краю всередині li */
+    gap: 8px;
+    font-size: 1rem; /* Узгоджений розмір шрифту */
+    color: var(--text-color); /* Колір тексту */
+}
+.rtt-dist-list li span.rtt-value {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+.rtt-dist-list li i {
+    font-size: 1.1em; /* Трохи більша іконка */
+    color: var(--success-color); /* Зелений колір для галочки */
+}
+
+
+.global-stats-section .stats-content p {
+    margin-bottom: 8px;
+}
+
+/* Стилі для розподілу RTT (приклад) */
+.rtt-distribution-bar {
+    display: flex;
+    height: 20px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    margin-bottom: 5px;
+    background-color: #e9ecef; /* Фон для незаповненої частини */
+}
+
+.rtt-bar-segment {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: width 0.3s ease-in-out;
+}
+
+.rtt-low-segment { background-color: var(--success-color); }
+.rtt-medium-segment { background-color: var(--warning-color); color: var(--dark-color); }
+.rtt-high-segment { background-color: var(--danger-color); }
+
+/* Нові стилі для контейнера стовпців глобальної статистики Ping */
+.global-ping-stats-columns-container {
+    display: flex;
+    flex-direction: row; /* Розташування в ряд */
+    gap: 25px; /* Збільшений проміжок між стовпцями */
+    justify-content: space-between; /* Рівномірний розподіл, якщо є місце */
+}
+
+.global-ping-stats-columns-container .global-stats-section {
+    flex-basis: 32%; /* Розподіл ширини між трьома стовпцями (приблизно) */
+    /* Можна використовувати flex-grow: 1; flex-shrink: 1; flex-basis: 0; для рівномірного розподілу */
+}
+
+/* Стиль для неактивного/сірого комбінованого блоку */
+.global-stats-section.combined-inactive {
+    background-color: #f0f0f0; /* Світло-сірий фон */
+    border-color: #dcdcdc; /* Трохи темніша рамка */
+}
+
+.global-stats-section.combined-inactive h3 {
+    color: var(--muted-text-color); /* Сірий колір для заголовка */
+    border-bottom-color: #dcdcdc;
+}
+
+.global-stats-section.combined-inactive .stats-content,
+.global-stats-section.combined-inactive .text-stats-container {
+    color: var(--muted-text-color); /* Сірий колір для тексту */
+}
+
+.global-stats-section.combined-inactive .chart-container canvas {
+    opacity: 0.6; /* Зробити діаграму напівпрозорою */
+}
+
+/* Адаптивність для стовпців статистики */
+@media (max-width: 992px) { /* Для планшетів */
+    .global-ping-stats-columns-container {
+        flex-direction: column; /* Перехід в стовпець */
+    }
+    .global-ping-stats-columns-container .global-stats-section {
+        flex-basis: auto; /* Автоматична ширина в стовпці */
+        margin-bottom: 20px; /* Відступ між блоками в стовпці */
+    }
+    .global-ping-stats-columns-container .global-stats-section:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 768px) { /* Для мобільних, якщо потрібні додаткові налаштування */
+    /* Можна залишити як для планшетів або додати специфічні стилі */
+}
+
+/* Стилі для Sparkline графіків */
+.sparkline-chart-container {
+    width: 100%;
+    /* height: 150px; */ /* Висота може бути різною, або керуватися вмістом */
+    min-height: 150px; /* Задамо мінімальну висоту */
+    position: relative;
+    margin-top: 10px;
+    overflow: visible !important; /* Дозволити підказкам виходити за межі */
+}
+
+.sparkline-chart-container canvas {
+    width: 100% !important; /* !important, щоб перебити можливі інлайнові стилі Chart.js */
+    height: 100% !important;
+}
+
+/* Специфічно для #globalDeviceStatusTimelineContainer Sparkline */
+#globalDeviceStatusTimelineContainer .sparkline-chart-container {
+    height: 150px; /* Збільшено висоту для цього конкретного графіка */
+}
+
+/* Стилізація для Donut Chart контейнерів */
+.chart-container {
+    max-width: 180px !important; /* Ще зменшуємо максимальну ширину */
+    max-height: 180px !important; /* Ще зменшуємо максимальну висоту */
+    margin: 15px auto !important; /* Відступи зверху/знизу та авто по боках для центрування */
+    position: relative; /* Для правильного позиціонування canvas */
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.sparkline-description {
+    font-size: 0.85rem; /* Зменшено з 0.9rem */
+    font-weight: 500;
+    color: var(--secondary-text-color);
+    margin-top: 10px; /* Відступ зверху перед описом */
+    margin-bottom: 3px; /* Менший відступ знизу перед графіком */
+    text-align: left; /* Вирівнювання по лівому краю */
+    padding-left: 5px; /* Невеликий відступ зліва */
+}
+
+/* Забезпечення консистентності для контейнерів спарклайнів SNMP */
+#globalSnmpStatsContainer .sparkline-chart-container {
+    width: 100%;
+    height: 120px; /* Адаптуйте висоту за потребою, так само як для Ping */
+    margin-bottom: 15px; /* Відступ між графіками */
+    padding: 5px;
+    background-color: var(--light-background-color);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+#globalSnmpStatsContainer .sparkline-chart-container canvas {
+    width: 100% !important;
+    height: 100px; /* Зменшуємо стандартну висоту SNMP спарклайнів */
+}
+
+/* Якщо потрібно окремо стилізувати текстові блоки SNMP статистики */
+#textSnmpStatsDb,
+#textSnmpStatsSession,
+#textSnmpStatsCombined {
+    /* Тут можна додати специфічні стилі, якщо загальних .text-stats-container недостатньо */
+    /* Наприклад, інший padding або margin, якщо потрібно */
+}
+
+/* Стилі для груп SNMP метрик */
+.snmp-metric-group {
+    padding: 10px 12px;
+    margin-top: 10px; /* Додаємо відступ зверху, щоб відокремити від заголовка секції або попередньої групи */
+    margin-bottom: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0,0,0,0.05); 
+}
+
+.snmp-metric-group .sparkline-description {
+    font-size: 0.85em; /* Трохи менший шрифт для опису в групі */
+    margin-bottom: 3px; /* Зменшуємо відступ під описом */
+    color: var(--muted-text-color);
+}
+
+.snmp-group-load {
+    background-color: rgba(227, 242, 253, 0.6); /* Світло-блакитний */
+}
+.snmp-group-cpu {
+    background-color: rgba(232, 245, 233, 0.6); /* Світло-зелений */
+}
+.snmp-group-ram {
+    background-color: rgba(255, 243, 224, 0.6); /* Світло-помаранчевий */
+}
+.snmp-group-swap {
+    background-color: rgba(243, 229, 245, 0.6); /* Світло-фіолетовий */
+}
+.snmp-group-network {
+    background-color: rgba(224, 247, 250, 0.6); /* Світло-бірюзовий */
+}
+.snmp-group-disk {
+    background-color: rgba(255, 235, 238, 0.6); /* Світло-рожевий */
+}
