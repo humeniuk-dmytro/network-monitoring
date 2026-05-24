@@ -6,27 +6,18 @@ perform_ping(host_ip)
     Cross-platform: chooses -c/-W for Linux and -n/-w for Windows.
 
 get_snmp_data(host, community, snmp_version, port, oids_map)
-    Queries a set of OIDs via SNMP v1/v2c and returns
-    (overall_status, metrics_dict, error_message).
+    Queries a set of OIDs via SNMP v1/v2c using the asyncio-based
+    pysnmp 7.x API (Python 3.12+ compatible).
+    Returns (overall_status, metrics_dict, error_message).
 """
 
+import asyncio
 import logging
 import platform
 import subprocess
 
 import pingparsing
 from flask import current_app
-from pysnmp.carrier.error import CarrierError
-from pysnmp.error import PySnmpError
-from pysnmp.hlapi import (
-    CommunityData,
-    ContextData,
-    ObjectIdentity,
-    ObjectType,
-    SnmpEngine,
-    UdpTransportTarget,
-    getCmd,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +68,6 @@ def perform_ping(host_ip: str) -> tuple[str, str]:
         ):
             is_online = True
 
-        # Fallback: trust the process return code
         if not is_online and process.returncode == 0:
             logger.debug(
                 "Ping %s: pingparsing said offline but returncode=0, treating as online",
@@ -96,24 +86,71 @@ def perform_ping(host_ip: str) -> tuple[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# SNMP
+# SNMP  (pysnmp 7.x, asyncio-based, Python 3.12+ compatible)
 # ---------------------------------------------------------------------------
 
-_SNMP_HOST_DOWN_KEYWORDS = ("host is down", "[errno 64]")
-_SNMP_NO_ROUTE_KEYWORDS = ("no route to host", "[errno 65]")
-_SNMP_TIMEOUT_KEYWORDS = ("timed out", "timeout", "no snmp response")
+_SNMP_HOST_DOWN_KEYWORDS = ("host is down", "[errno 64]", "no route to host", "[errno 65]")
+_SNMP_TIMEOUT_KEYWORDS = ("timed out", "timeout", "no snmp response", "request timed out")
 
 
 def _classify_snmp_error(err_str: str) -> str:
-    """Map an error string to one of the internal SNMP error categories."""
     s = err_str.lower()
     if any(k in s for k in _SNMP_HOST_DOWN_KEYWORDS):
         return "host_down"
-    if any(k in s for k in _SNMP_NO_ROUTE_KEYWORDS):
-        return "no_route"
     if any(k in s for k in _SNMP_TIMEOUT_KEYWORDS):
         return "timeout"
+    if "noaccess" in s or "no access" in s:
+        return "no_access"
     return "other"
+
+
+async def _snmp_get_all(
+    host: str,
+    community: str,
+    snmp_version: int,
+    port: int,
+    oids_map: dict[str, str],
+) -> dict[str, str]:
+    """Async inner: query each OID and return raw result strings."""
+    # Import here to keep module-level imports clean
+    from pysnmp.hlapi.v3arch.asyncio import (
+        CommunityData, ContextData, ObjectIdentity, ObjectType,
+        SnmpEngine, UdpTransportTarget, get_cmd,
+    )
+
+    results: dict[str, str] = {}
+    engine = SnmpEngine()
+
+    for name, oid_str in oids_map.items():
+        try:
+            target = await UdpTransportTarget.create(
+                (host, port), timeout=2, retries=1
+            )
+            err_ind, err_status, err_index, var_binds = await get_cmd(
+                engine,
+                CommunityData(community, mpModel=snmp_version - 1),
+                target,
+                ContextData(),
+                ObjectType(ObjectIdentity(oid_str)),
+            )
+
+            if err_ind:
+                results[name] = f"Error: {str(err_ind)[:120]}"
+                logger.warning("SNMP %s OID %s: %s", host, name, err_ind)
+            elif err_status:
+                results[name] = f"Error: {err_status.prettyPrint()}"
+                logger.warning("SNMP %s OID %s: status=%s", host, name, err_status.prettyPrint())
+            else:
+                for vb in var_binds:
+                    results[name] = str(vb[1])
+                logger.debug("SNMP %s OID %s = %s", host, name, results.get(name))
+
+        except Exception as exc:
+            results[name] = f"Exception: {type(exc).__name__}: {str(exc)[:80]}"
+            logger.error("SNMP %s OID %s: %s", host, name, exc, exc_info=True)
+
+    engine.close_dispatcher()
+    return results
 
 
 def get_snmp_data(
@@ -123,104 +160,43 @@ def get_snmp_data(
     port: int,
     oids_map: dict[str, str],
 ) -> tuple[str, dict, str | None]:
-    """Query *oids_map* via SNMP and return ``(status, metrics, error_msg)``.
+    """Query *oids_map* via SNMP v1/v2c and return ``(status, metrics, error_msg)``.
 
-    Parameters
-    ----------
-    oids_map:
-        ``{"metric_name": "1.3.6.1.2.1..."}`` mapping.
-
-    Returns
-    -------
-    status:
-        One of: ``snmp_ok`` | ``snmp_host_down`` | ``snmp_timeout`` |
-        ``snmp_no_access`` | ``snmp_error``
-    metrics:
-        Dict of ``{metric_name: value_or_error_string}``.
-    error_msg:
-        Human-readable summary of the first significant error, or ``None``
-        if all OIDs succeeded.
+    Wraps the asyncio coroutine in a synchronous call so Flask routes
+    don't need to be async.
     """
-    metrics: dict[str, str] = {}
-    engine = SnmpEngine()
+    if not oids_map:
+        return "snmp_error", {}, "No OIDs configured"
 
-    counters = {k: 0 for k in ("success", "host_down", "no_route", "timeout", "no_access", "other")}
-    first_error: str | None = None
+    try:
+        metrics = asyncio.run(_snmp_get_all(host, community, snmp_version, port, oids_map))
+    except Exception as exc:
+        logger.error("SNMP asyncio.run failed for %s: %s", host, exc, exc_info=True)
+        return "snmp_error", {}, str(exc)
+
     total = len(oids_map)
+    errors = {k: v for k, v in metrics.items() if v.startswith(("Error:", "Exception:"))}
+    success_count = total - len(errors)
 
-    for name, oid_str in oids_map.items():
-        user_msg = "SNMP: unknown error"
-        category: str | None = None
-
-        try:
-            iterator = getCmd(
-                engine,
-                CommunityData(community, mpModel=snmp_version - 1),
-                UdpTransportTarget((host, port), timeout=1, retries=2),
-                ContextData(),
-                ObjectType(ObjectIdentity(oid_str)),
-            )
-            err_ind, err_status, err_index, var_binds = next(iterator)
-
-            if err_ind:
-                category = _classify_snmp_error(str(err_ind))
-                user_msg = f"Error: {str(err_ind)[:120]}"
-                logger.warning("SNMP %s OID %s (%s): %s", host, oid_str, name, err_ind)
-
-            elif err_status:
-                status_str = err_status.prettyPrint().lower()
-                if "noaccess" in status_str:
-                    category = "no_access"
-                    user_msg = "Error: noAccess"
-                elif any(k in status_str for k in ("nosuchname", "nosuchobject", "nosuchinstance")):
-                    category = "other"
-                    user_msg = f"Error: OID not found ({err_status.prettyPrint()})"
-                else:
-                    category = "other"
-                    user_msg = f"Error: {err_status.prettyPrint()}"
-                logger.warning("SNMP %s OID %s (%s): status=%s", host, oid_str, name, err_status.prettyPrint())
-
-            else:
-                # Success
-                counters["success"] += 1
-                for vb in var_binds:
-                    metrics[name] = str(vb[1])
-                logger.debug("SNMP %s OID %s (%s) = %s", host, oid_str, name, metrics.get(name))
-                continue
-
-        except (OSError, CarrierError, PySnmpError) as exc:
-            category = _classify_snmp_error(str(exc))
-            user_msg = f"Exception: {type(exc).__name__}"
-            logger.error("SNMP %s OID %s (%s): %s", host, oid_str, name, exc, exc_info=True)
-        except Exception as exc:
-            category = "other"
-            user_msg = f"Unexpected exception: {type(exc).__name__}"
-            logger.error("SNMP %s OID %s (%s): %s", host, oid_str, name, exc, exc_info=True)
-
-        # Record failure
-        metrics[name] = user_msg
-        counters[category or "other"] += 1
-        if first_error is None:
-            first_error = user_msg
-
-    # Determine overall status
-    if counters["success"] > 0:
+    if success_count > 0:
         overall = "snmp_ok"
         first_error = None
-    elif total == 0:
-        overall = "snmp_error"
-        first_error = "SNMP: no OIDs configured"
-    elif counters["host_down"] + counters["no_route"] == total:
-        overall = "snmp_host_down"
-    elif counters["timeout"] == total:
-        overall = "snmp_timeout"
-    elif counters["no_access"] > 0 and counters["success"] == 0:
-        overall = "snmp_no_access"
+    elif errors:
+        categories = [_classify_snmp_error(v) for v in errors.values()]
+        if all(c == "host_down" for c in categories):
+            overall = "snmp_host_down"
+        elif all(c == "timeout" for c in categories):
+            overall = "snmp_timeout"
+        elif all(c == "no_access" for c in categories):
+            overall = "snmp_no_access"
+        else:
+            overall = "snmp_error"
+        first_error = next(iter(errors.values()))
     else:
         overall = "snmp_error"
+        first_error = "Unknown error"
 
     logger.info(
-        "SNMP %s → %s | success=%d/%d | err=%s",
-        host, overall, counters["success"], total, first_error,
+        "SNMP %s → %s | success=%d/%d", host, overall, success_count, total
     )
-    return overall, metrics, first_error
+    return overall, metrics, first_error if overall != "snmp_ok" else None

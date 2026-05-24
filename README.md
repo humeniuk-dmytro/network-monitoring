@@ -19,8 +19,6 @@
 |------------|--------------|
 | ![Add Device](docs/screenshots/add_device_modal.png) | ![SNMP](docs/screenshots/snmp_metrics.png) |
 
-> **To add screenshots:** run the app, take screenshots, and save them to `docs/screenshots/`.
-
 ---
 
 ## ✨ Features
