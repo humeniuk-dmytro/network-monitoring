@@ -124,6 +124,36 @@ Open **http://localhost:5000**
 
 ---
 
+## 🖥️ Test VM — Download & Run
+
+The project was tested against a pre-configured Linux VM with SNMP and SSH already enabled.
+
+### Download
+
+The VM image is hosted on Hugging Face (3 GB):
+
+```bash
+# Install HF CLI
+pip install huggingface_hub
+
+# Download all VM files into ./vm/ directory
+huggingface-cli download melmonreaz/network-monitoring-vm \
+  --repo-type dataset \
+  --local-dir ./vm
+```
+
+Or download manually: **https://huggingface.co/datasets/melmonreaz/network-monitoring-vm**
+
+Files in the archive:
+
+| File | Description |
+|------|-------------|
+| `*.qcow2` | Virtual disk image (Linux OS, pre-configured) |
+| `efi_vars.fd` | EFI variables — required for boot |
+| `config.plist` | UTM config (reference only, not needed on Linux) |
+
+---
+
 ## 🖥️ Setting Up a Test Device (QEMU/KVM + qcow2)
 
 The project was developed and tested against a **Linux VM** provided as a `.qcow2` disk image.  
