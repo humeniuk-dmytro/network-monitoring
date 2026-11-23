@@ -85,7 +85,7 @@ network_monitoring/
 ### Option A — Docker (recommended)
 
 ```bash
-git clone https://github.com/<your-username>/network-monitoring.git
+git clone https://github.com/humeniuk-dmytro/network-monitoring.git
 cd network-monitoring
 
 cp .env.example .env       # edit SECRET_KEY etc.
@@ -100,7 +100,7 @@ Open **http://localhost:5000**
 
 ```bash
 # 1. Clone
-git clone https://github.com/<your-username>/network-monitoring.git
+git clone https://github.com/humeniuk-dmytro/network-monitoring.git
 cd network-monitoring
 
 # 2. Virtual environment
